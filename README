@@ -1,0 +1,13 @@
+A ruby script that will automatically follow all your followers.
+
+Gem dependencies:
+* twitter
+
+Usage:
+follower = AutoFollower.new('admin@example.com', 'password')
+follower.start
+
+NB: 
+Twitter has limit on how many people you can follow in an hour.
+But if you schedule this script to run hourly it will eventually catchup.
+
