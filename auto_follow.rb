@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'rubygems'
+gem "twitter", '>=0.2.6'
 require 'twitter'
 
 # 
