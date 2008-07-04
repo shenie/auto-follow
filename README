@@ -1,7 +1,7 @@
 A ruby script that will automatically follow all your followers.
 
 Gem dependencies:
-* twitter
+* twitter >= 0.2.6
 
 Usage:
 follower = AutoFollower.new('admin@example.com', 'password')
