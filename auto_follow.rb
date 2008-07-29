@@ -18,8 +18,6 @@ class AutoFollower
   end
   
   def start
-    followers = @twitter.followers(true).collect { |f| f.screen_name }
-    
     (followers - friends).each { |name| follow(name) }
   end
 
@@ -32,13 +30,29 @@ class AutoFollower
     stalk(query, page)
   end
 
+  def followers
+    @followers ||= find_followers
+  end
+  
+  def friends
+    @friends ||= find_friends
+  end
+
   private
   
     def follow(name)
       @twitter.create_friendship(name)
     end
     
-    def friends
-      @friends ||= @twitter.friends(true).collect { |f| f.screen_name }
+    def find_followers(page = 1)
+      f = @twitter.followers(:lite => true, :page => page).collect { |f| f.screen_name }
+      return f if f.empty? || f.size < 100
+      f + find_followers(page + 1)
+    end
+    
+    def find_friends(page = 1)
+      f = @twitter.friends(:lite => true, :page => page).collect { |f| f.screen_name }
+      return f if f.empty? || f.size < 100
+      f + find_friends(page + 1)
     end
 end
