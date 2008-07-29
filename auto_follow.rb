@@ -13,6 +13,8 @@ require 'hpricot'
 # 
 class AutoFollower
   
+  TWITTER_PAGE_SIZE = 100
+  
   def initialize(email, password)
     @twitter = Twitter::Base.new(email, password)
   end
@@ -46,13 +48,13 @@ class AutoFollower
     
     def find_followers(page = 1)
       f = @twitter.followers(:lite => true, :page => page).collect { |f| f.screen_name }
-      return f if f.empty? || f.size < 100
+      return f if f.empty? || f.size < TWITTER_PAGE_SIZE
       f + find_followers(page + 1)
     end
     
     def find_friends(page = 1)
       f = @twitter.friends(:lite => true, :page => page).collect { |f| f.screen_name }
-      return f if f.empty? || f.size < 100
+      return f if f.empty? || f.size < TWITTER_PAGE_SIZE
       f + find_friends(page + 1)
     end
 end
