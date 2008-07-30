@@ -32,6 +32,7 @@ class AutoFollower
     
     @log = Logger.new(output)
     @log.sev_threshold = level
+    @log.formatter = Logger::Formatter.new
     
     @black_list = File.exist?(BLACK_LIST) ? YAML.load_file(BLACK_LIST) : []
   end
@@ -68,8 +69,14 @@ class AutoFollower
   
     def follow(name, delay = FOLLOW_INTERVAL)
       @log.info "Following: #{name}"
-      @twitter.create_friendship(name)
-      sleep delay
+      begin
+        @twitter.create_friendship(name)
+      rescue => e
+        @log.error "Failed to follow #{name}"
+        @log.error e
+      ensure
+        sleep delay
+      end
     end
     
     def find_followers(page = 1)
