@@ -22,7 +22,7 @@ class AutoFollower
   
   FOLLOW_INTERVAL = 10
   TWITTER_PAGE_SIZE = 100
-  BLACK_LIST = 'black_list.yml'
+  BLACK_LIST = "#{File.dirname(__FILE__)}/black_list.yml"
   
   attr_accessor :black_list
   
@@ -63,6 +63,7 @@ class AutoFollower
   end
   
   def _stalk(query, page = 1)
+    @log.debug("Stalking page: #{page}")
     doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
     names = doc.search(".screen_name span").collect { |d| d.innerHTML }
     return if names.empty?
@@ -90,17 +91,14 @@ class AutoFollower
         @twitter.create_friendship(name)
         @log.info "Following: #{name}"
       rescue => e
-        # 400 - reached api limit => exit
-        # 403 - private a/c => add to black list
-        # 500 - not real a/c or twitter issue => ignore
-        
-        @log.error "Failed to follow #{name}"
-        @log.error e
-        
         if e.message.include? "403"
           black_list << name
+          @log.warn "Twitter returned 403. So we added #{name} to black list"
         elsif e.message.include? "400"
           raise "APILimitHit"
+        else
+          @log.error "Failed to follow #{name}"
+          @log.error e
         end
       ensure
         sleep delay
