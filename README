@@ -13,6 +13,7 @@ Another option if you only want to follow your followers is
 running it off command line like auto_follow.rb admin@example.com password
 
 You can black list people from been added to your friend by adding them to the yaml file called black_list.yml.
+The script will also construct a black_list.yml once it finishes because it might add more names to the list.
 
 NB:
 Twitter has limit on how many people you can follow in an hour.

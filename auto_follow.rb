@@ -43,35 +43,13 @@ class AutoFollower
     peeps = (followers - friends).find_all { |n| !black_listed?(n) }
     
     @log.info "Need to follow #{peeps.size} people"
-    begin
-      peeps.each { |name| follow(name) }
-    ensure
-      save_black_list
-    end
+    execute { peeps.each { |name| follow(name) } }
   end
   
   def stalk(query, page = 1)
-    begin
-      _stalk(query, page)
-    ensure
-      save_black_list
-    end
+    execute { _stalk(query, page) }
   end
   
-  def save_black_list
-    File.open(BLACK_LIST, 'w') {|f| f.write(black_list.to_yaml) }
-  end
-  
-  def _stalk(query, page = 1)
-    @log.debug("Stalking page: #{page}")
-    doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
-    names = doc.search(".screen_name span").collect { |d| d.innerHTML }
-    return if names.empty?
-    (names - friends).find_all { |n| !black_listed?(n) }.each { |name| follow(name) }
-    page = page + 1
-    stalk(query, page)
-  end
-
   def followers
     @followers ||= find_followers
   end
@@ -82,10 +60,28 @@ class AutoFollower
 
   private
   
+    def execute(&block)
+      begin
+        block.call
+      ensure
+        File.open(BLACK_LIST, 'w') {|f| f.write(black_list.to_yaml) }
+      end
+    end
+  
     def black_listed?(name)
       black_list.include?(name)
     end
   
+    def _stalk(query, page = 1)
+      @log.debug("Stalking page: #{page}")
+      doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
+      names = doc.search(".screen_name span").collect { |d| d.innerHTML }
+      return if names.empty?
+      (names - friends).find_all { |n| !black_listed?(n) }.each { |name| follow(name) }
+      page = page + 1
+      stalk(query, page)
+    end
+
     def follow(name, delay = FOLLOW_INTERVAL)
       begin
         @twitter.create_friendship(name)
