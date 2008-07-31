@@ -6,6 +6,8 @@ require "yaml"
 gem "twitter", '>=0.2.6'
 require 'twitter'
 require 'hpricot'
+require 'yaml'
+require 'open-uri'
 
 # 
 # Usage:
@@ -57,7 +59,7 @@ class AutoFollower
   end
   
   def save_black_list
-    # the black_list array to black list yaml file
+    File.open(BLACK_LIST, 'w') {|f| f.write(black_list.to_yaml) }
   end
   
   def _stalk(query, page = 1)
@@ -96,9 +98,9 @@ class AutoFollower
         @log.error e
         
         if e.message.include? "403"
-          # add to black list
+          black_list << name
         elsif e.message.include? "400"
-          # rethrow
+          raise "APILimitHit"
         end
       ensure
         sleep delay
