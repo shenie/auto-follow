@@ -93,7 +93,7 @@ class AutoFollower
       rescue => e
         if e.message.include? "403"
           black_list << name
-          @log.warn "Twitter returned 403. So we added #{name} to black list"
+          @log.warn "Black listed: #{name}"
         elsif e.message.include? "400"
           raise "APILimitHit"
         else
