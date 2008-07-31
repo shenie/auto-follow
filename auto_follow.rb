@@ -41,10 +41,26 @@ class AutoFollower
     peeps = (followers - friends).find_all { |n| !black_listed?(n) }
     
     @log.info "Need to follow #{peeps.size} people"
-    peeps.each { |name| follow(name) }
+    begin
+      peeps.each { |name| follow(name) }
+    ensure
+      save_black_list
+    end
   end
-
+  
   def stalk(query, page = 1)
+    begin
+      _stalk(query, page)
+    ensure
+      save_black_list
+    end
+  end
+  
+  def save_black_list
+    # the black_list array to black list yaml file
+  end
+  
+  def _stalk(query, page = 1)
     doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
     names = doc.search(".screen_name span").collect { |d| d.innerHTML }
     return if names.empty?
@@ -68,12 +84,22 @@ class AutoFollower
     end
   
     def follow(name, delay = FOLLOW_INTERVAL)
-      @log.info "Following: #{name}"
       begin
         @twitter.create_friendship(name)
+        @log.info "Following: #{name}"
       rescue => e
+        # 400 - reached api limit => exit
+        # 403 - private a/c => add to black list
+        # 500 - not real a/c or twitter issue => ignore
+        
         @log.error "Failed to follow #{name}"
         @log.error e
+        
+        if e.message.include? "403"
+          # add to black list
+        elsif e.message.include? "400"
+          # rethrow
+        end
       ensure
         sleep delay
       end
