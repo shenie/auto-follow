@@ -47,7 +47,21 @@ class AutoFollower
   end
   
   def stalk(query, page = 1)
-    execute { _stalk(query, page) }
+    execute do
+      names = search(query, page)
+
+      while !names.empty?
+        @log.debug("Stalking page: #{page}")
+        (names - friends).find_all { |n| !black_listed?(n) }.each { |name| follow(name) }
+        page = page + 1
+        names = search(query, page)
+      end
+    end
+  end
+  
+  def search(query, page)
+    doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
+    names = doc.search(".screen_name span").collect { |d| d.innerHTML }
   end
   
   def followers
@@ -72,16 +86,6 @@ class AutoFollower
       black_list.include?(name)
     end
   
-    def _stalk(query, page = 1)
-      @log.debug("Stalking page: #{page}")
-      doc = Hpricot(open("http://twitter.com/search/users?q=#{query}&page=#{page}"))
-      names = doc.search(".screen_name span").collect { |d| d.innerHTML }
-      return if names.empty?
-      (names - friends).find_all { |n| !black_listed?(n) }.each { |name| follow(name) }
-      page = page + 1
-      stalk(query, page)
-    end
-
     def follow(name, delay = FOLLOW_INTERVAL)
       begin
         @twitter.create_friendship(name)
