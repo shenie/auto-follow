@@ -3,7 +3,7 @@
 require 'rubygems'
 require "logger"
 require "yaml"
-gem "twitter", '>=0.2.6'
+gem "twitter", '>=0.6.6'
 require 'twitter'
 require 'hpricot'
 require 'yaml'
@@ -17,17 +17,18 @@ require 'open-uri'
 # 
 # Another option if you only want to follow your followers is
 # running it off command line like auto_follow.rb admin@example.com password
-# 
+#
 class AutoFollower
   
-  FOLLOW_INTERVAL = 10
+  FOLLOW_INTERVAL = 5
   TWITTER_PAGE_SIZE = 100
   BLACK_LIST = "#{File.dirname(__FILE__)}/black_list.yml"
   
   attr_accessor :black_list
   
-  def initialize(email, password, output = STDOUT, level = Logger::INFO)
-    @twitter = Twitter::Base.new(email, password)
+  def initialize(username, password, output = STDOUT, level = Logger::INFO)
+    httpauth = Twitter::HTTPAuth.new(username, password)
+    @twitter = Twitter::Base.new(httpauth)
     
     output = eval(output) if output.is_a?(String)
     level = eval(level) if level.is_a?(String)
@@ -88,7 +89,7 @@ class AutoFollower
   
     def follow(name, delay = FOLLOW_INTERVAL)
       begin
-        @twitter.create_friendship(name)
+        @twitter.friendship_create(name)
         @log.info "Following: #{name}"
       rescue => e
         if e.message.include? "403"
